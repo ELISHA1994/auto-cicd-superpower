@@ -4,7 +4,7 @@ commands:
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
-      # Add parameter here   
+    # Add parameter here
     steps:
       - run:
           name: Destroy environments
@@ -16,7 +16,7 @@ commands:
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
-      # Add parameter here     
+    # Add parameter here
     steps:
       - run:
           name: Revert migrations
@@ -31,7 +31,7 @@ commands:
             #  Add revert code here. You can find this in the Getting Started section.
               exit 1
             fi
-            
+
 jobs:
   build-frontend:
     docker:
@@ -59,47 +59,47 @@ jobs:
       - run:
           name: Back-end build
           command: |
-             # Your code here
-             exit 1
+            # Your code here
+            exit 1
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
 
   test-frontend:
     docker:
-      # Docker image here
+    # Docker image here
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-                
+    # Checkout code from git
+    # Restore from cache
+    # Your job code here
+
   test-backend:
     docker:
-      # Docker image here
+    # Docker image here
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
-            
+    # Checkout code from git
+    # Restore from cache
+    # Your job code here
+
   scan-frontend:
     docker:
-      # Docker image here
+    # Docker image here
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+    # Checkout code from git
+    # Restore from cache
+    # Your job code here
 
   scan-backend:
     docker:
-      # Docker image here
+    # Docker image here
     steps:
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+    # Checkout code from git
+    # Restore from cache
+    # Your job code here
 
   deploy-infrastructure:
     docker:
-      # Docker image here that supports AWS CLI
+    # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
       - run:
@@ -129,11 +129,11 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
-      # Here's where you will add some code to rollback on failure      
+      # Here's where you will add some code to rollback on failure
 
   configure-infrastructure:
     docker:
-      # Docker image here that supports Ansible
+    # Docker image here that supports Ansible
     steps:
       # Checkout code from git
       # Add ssh keys with fingerprint
@@ -148,11 +148,11 @@ jobs:
           command: |
             # Your code here
             exit 1
-      # Here's where you will add some code to rollback on failure      
+      # Here's where you will add some code to rollback on failure
 
   run-migrations:
     docker:
-      # Docker image here that supports NodeJS
+    # Docker image here that supports NodeJS
     steps:
       # Checkout code from git
       - run:
@@ -165,11 +165,11 @@ jobs:
           command: |
             # Your code here
             exit 1
-     # Here's where you will add some code to rollback on failure      
+      # Here's where you will add some code to rollback on failure
 
   deploy-frontend:
     docker:
-      # Docker image here that supports AWS CLI
+    # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
       - run:
@@ -186,11 +186,11 @@ jobs:
           name: Deploy frontend objects
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure      
-                    
+            # Here's where you will add some code to rollback on failure      
+
   deploy-backend:
     docker:
-      # Docker image here that supports Ansible
+    # Docker image here that supports Ansible
     steps:
       # Checkout code from git
       # Add ssh keys with fingerprint
@@ -203,11 +203,11 @@ jobs:
           name: Deploy backend
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure  
+      # Here's where you will add some code to rollback on failure
 
   smoke-test:
     docker:
-      # Lightweight Docker image 
+    # Lightweight Docker image
     steps:
       # Checkout code from git
       - run:
@@ -226,11 +226,11 @@ jobs:
           name: Frontend smoke test.
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure  
+      # Here's where you will add some code to rollback on failure
 
   cloudfront-update:
     docker:
-      # Docker image here that supports AWS CLI
+    # Docker image here that supports AWS CLI
     steps:
       # Checkout code from git
       - run:
@@ -241,11 +241,11 @@ jobs:
           name: Update cloudfront distribution
           command: |
             # your code here
-      # Here's where you will add some code to rollback on failure  
+      # Here's where you will add some code to rollback on failure
 
-cleanup:
+  cleanup:
     docker:
-      # Docker image here
+    # Docker image here
     steps:
       # Checkout code from git
       - run:
@@ -261,7 +261,8 @@ cleanup:
             then
               # your code here
             fi
-            
+
+
 
 workflows:
   default:
