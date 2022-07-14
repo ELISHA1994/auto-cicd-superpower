@@ -94,6 +94,10 @@ jobs:
             npm audit --audit-level=critical
       - slack/notify:
           channel: C03PGL9NJE9
+          event: pass
+          template: success_tagged_deploy_1
+      - slack/notify:
+          channel: C03PGL9NJE9
           event: fail
           template: basic_fail_1
 
@@ -115,9 +119,12 @@ jobs:
             npm audit --audit-level=critical
       - slack/notify:
           channel: C03PGL9NJE9
+          event: pass
+          template: success_tagged_deploy_1
+      - slack/notify:
+          channel: C03PGL9NJE9
           event: fail
           template: basic_fail_1
-
 
 workflows:
   default:
