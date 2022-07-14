@@ -55,6 +55,10 @@ jobs:
             cd frontend
             npm install
             npm run test
+      - slack/notify:
+          channel: C03PGL9NJE9
+          event: fail
+          template: basic_fail_1
 
   test-backend:
     docker:
@@ -69,6 +73,10 @@ jobs:
             cd backend
             npm install
             npm run test
+      - slack/notify:
+          channel: C03PGL9NJE9
+          event: fail
+          template: basic_fail_1
 
   scan-frontend:
     docker:
@@ -84,6 +92,10 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+      - slack/notify:
+          channel: C03PGL9NJE9
+          event: fail
+          template: basic_fail_1
 
   scan-backend:
     docker:
@@ -101,6 +113,10 @@ jobs:
             npm install --save-dev webpack@5.73.0
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+      - slack/notify:
+          channel: C03PGL9NJE9
+          event: fail
+          template: basic_fail_1
 
 
 workflows:
