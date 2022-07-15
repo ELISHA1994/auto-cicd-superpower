@@ -198,21 +198,21 @@ jobs:
       - run:
           name: Add the EC2 instance IP to the Ansible inventory
           command: |
-            aws ec2 describe-instances \
-            --filter "Name=instance-state-name,Values=running" \
-            --query "Reservations[*].Instances[*].[PublicIpAddress]" \
-            --output text >> ~/project/.circleci/ansible/inventory.txt
+            echo $(aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
+            --output text) >> ~/project/.circleci/ansible/inventory.txt
             cat ~/project/.circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/.circleci/ansible/*
+            - project/.circleci/ansible/inventory.txt
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
   configure-infrastructure:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.10-alpine3.16
     steps:
       - checkout
       - add_ssh_keys:
@@ -220,16 +220,21 @@ jobs:
             - '28:c7:5e:00:37:4b:08:24:3b:fd:7b:9d:59:4e:92:70'
       - attach_workspace:
           at: ~/
+      - restore_cache:
+          keys: [ backend-build ]
       - run:
           name: Install dependencies
           command: |
-            apk add --update  ansible
-            pip install awscli
+            apk add --update --no-cache tar gzip ansible aws-cli
       - run:
           name: Configure backend
           command: |
             cd .circleci/ansible
             ansible-playbook -i inventory.txt configure-server.yml
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/backend
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
