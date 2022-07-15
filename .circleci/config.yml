@@ -47,6 +47,7 @@ commands:
 
 
 
+
 jobs:
   build-frontend:
     docker:
@@ -182,17 +183,17 @@ jobs:
           command: |
             aws cloudformation deploy \
                 --template-file .circleci/files/backend.yml \
-                --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
                 --tags project=udapeople
+                --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Ensure front-end infrastructure exists
           command: |
             aws cloudformation deploy \
                 --template-file .circleci/files/frontend.yml \
-                --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"  \
                 --tags project=udapeople
+                --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
       - run:
           name: Add the EC2 instance IP to the Ansible inventory
           command: |
@@ -210,7 +211,7 @@ jobs:
 
   configure-infrastructure:
     docker:
-      - image: python:3.10-alpine3.16
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - add_ssh_keys:
@@ -221,7 +222,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache tar gzip ansible aws-cli
+            apk add --update  ansible
+            pip install awscli
       - run:
           name: Configure backend
           command: |
@@ -232,15 +234,11 @@ jobs:
 
   run-migrations:
     docker:
-      - image: python:3.10-alpine3.16
+      - image: circleci/node:13.8.0
     steps:
       - checkout
-      - run:
-          name: Install deps
-          command: |
-            apk add --update --no-cache tar gzip nodejs npm aws-cli curl
       - restore_cache:
-          keys: [backend-build]
+          keys: [ backend-build ]
       - run:
           name: Run migrations
           command: |
@@ -283,7 +281,6 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
-            # your code here
             cd frontend
             npm install
             npm run build
@@ -296,7 +293,7 @@ jobs:
 
   deploy-backend:
     docker:
-      - image: python:3.10-alpine3.16
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - add_ssh_keys:
@@ -307,8 +304,9 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update ansible 
-            apk add --update --no-cache tar gzip nodejs npm curl aws-cli
+            apk add --update ansible
+            pip install awscli
+            apk add --update --no-cache tar gzip nodejs npm curl
       - run:
           name: Deploy backend
           command: |
@@ -336,7 +334,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update --no-cache curl aws-cli tar gzip nodejs npm
+            apk add --update --no-cache tar gzip nodejs npm curl
+            pip install awscli
       - attach_workspace:
           at: ~/
       - run:
@@ -445,26 +444,26 @@ workflows:
           requires: [build-frontend]
       - test-backend:
           requires: [build-backend]
+      - scan-backend:
+          requires: [ build-backend ]
       - scan-frontend:
           requires: [build-frontend]
-      - scan-backend:
-          requires: [build-backend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
               only: [master]
       - configure-infrastructure:
-          requires: [ deploy-infrastructure ]
+          requires: [deploy-infrastructure]
       - run-migrations:
-          requires: [ configure-infrastructure ]
+          requires: [configure-infrastructure]
       - deploy-frontend:
-          requires: [ run-migrations ]
+          requires: [run-migrations]
       - deploy-backend:
-          requires: [ run-migrations ]
+          requires: [run-migrations]
       - smoke-test:
-          requires: [ deploy-backend, deploy-frontend ]
+          requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
-          requires: [ smoke-test ]
+          requires: [smoke-test]
       - cleanup:
           requires: [ cloudfront-update ]
