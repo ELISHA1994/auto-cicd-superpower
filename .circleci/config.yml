@@ -417,7 +417,7 @@ jobs:
     steps:
       - checkout
       - run:
-            name: Get Old WorkflowID
+          name: Get Old WorkflowID
           command: |
             # Fetch the Old workflow ID
             export OldWorkflowID=$(aws cloudformation \
