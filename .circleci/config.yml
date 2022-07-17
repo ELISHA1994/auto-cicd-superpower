@@ -45,9 +45,6 @@ commands:
                 npm run migrations:revert
             fi
 
-
-
-
 jobs:
   build-frontend:
     docker:
@@ -177,24 +174,27 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
-      - run: yum install -y tar gzip
+      - run:
+          name: Install dependencies
+          command: |
+            yum install -y tar gzip
       - run:
           name: Ensure back-end infrastructure exists
           command: |
             aws cloudformation deploy \
                 --template-file .circleci/files/backend.yml \
-                --tags project=udapeople \
                 --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+                --tags project=udapeople
 
       - run:
           name: Ensure front-end infrastructure exists
           command: |
             aws cloudformation deploy \
                 --template-file .circleci/files/frontend.yml \
-                --tags project=udapeople \
                 --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
-                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}"
+                --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:7}" \
+                --tags project=udapeople
       - run:
           name: Add the EC2 instance IP to the Ansible inventory
           command: |
@@ -391,13 +391,16 @@ jobs:
             apk add --update --no-cache tar gzip nodejs npm curl
             pip install awscli
       - run:
-          name: Update cloudfront distribution
+          name: Store old WorkflowID
           command: |
             export WorkflowID=$(aws cloudformation \
             list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-            --no-paginate --output text)
-            curl https://kvdb.io/4UyLmH6gV9fDPfNi3hRy38/OldWrkflwId -d "$WorkflowID"
+            --no-paginate --output text) ~/oldworkflowid.txt
             echo WorkflowID: "$WorkflowID"
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - oldworkflowid.txt
       - run:
           name: Update cloudfront distribution
           command: |
@@ -416,29 +419,24 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/
       - run:
-          name: Get Old WorkflowID and CleanUp
+          name: Clean up old environment
           command: |
             # Fetch the Old workflow ID
-            export OldWorkflowID=$(aws cloudformation \
-                    list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                    --no-paginate --output text)
-            echo OldWorkflowID: "${OldWorkflowID}"
-            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
-            # Fetch the stack names
-            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-                    --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
-            echo Stack names: "${STACKS[@]}"
-            echo OldWorkflowID: "${OldWorkflowID}"
-            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
-            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" =~ "${OldWorkflowID}" ]]
+            export OldWorkflowID=$(cat ~/oldworkflowid.txt)
+            CurrentWorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
+            if [[ "$CurrentWorkflowID" =~ "${OldWorkflowID}" ]]
             then
+                echo "$OldWorkflowID!=$CurrentWorkflowID => will delete old version"
+            
                 aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
                 aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
                 aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
                 # your code goes here
             else
-                echo "No stack to delete"
+                echo "$OldWorkflowID==$CurrentWorkflowID => nothing needs to be done..."
             fi
       - slack/notify:
           event: fail
@@ -447,32 +445,32 @@ jobs:
           event: pass
           template: success_tagged_deploy_1
 
-  prometheus-node-exporter:
-    docker:
-      - image: python:3.10-alpine3.16
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - '28:c7:5e:00:37:4b:08:24:3b:fd:7b:9d:59:4e:92:70'
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --update aws-cli tar gzip ansible nodejs npm
-      - restore_cache:
-          keys: [backend-build]
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Setup Prometheus node exporter
-          command: |
-            cd .circleci/ansible
-            cat inventory.txt
-            ansible-playbook -i inventory.txt node-exporter.yml
-      - destroy-environment:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-      - revert-migrations:
-          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+#  prometheus-node-exporter:
+#    docker:
+#      - image: python:3.10-alpine3.16
+#    steps:
+#      - checkout
+#      - add_ssh_keys:
+#          fingerprints:
+#            - '28:c7:5e:00:37:4b:08:24:3b:fd:7b:9d:59:4e:92:70'
+#      - run:
+#          name: Install dependencies
+#          command: |
+#            apk add --update aws-cli tar gzip ansible nodejs npm
+#      - restore_cache:
+#          keys: [backend-build]
+#      - attach_workspace:
+#          at: ~/
+#      - run:
+#          name: Setup Prometheus node exporter
+#          command: |
+#            cd .circleci/ansible
+#            cat inventory.txt
+#            ansible-playbook -i inventory.txt node-exporter.yml
+#      - destroy-environment:
+#          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+#      - revert-migrations:
+#          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 
 workflows:
@@ -505,7 +503,7 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
-      - prometheus-node-exporter:
-          requires: [smoke-test]
+#      - prometheus-node-exporter:
+#          requires: [smoke-test]
       - cleanup:
           requires: [ cloudfront-update ]
