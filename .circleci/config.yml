@@ -420,6 +420,10 @@ jobs:
       - image: amazon/aws-cli
     steps:
       - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update --no-cache tar gzip
       - attach_workspace:
           at: ~/
       - run:
