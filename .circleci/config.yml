@@ -429,7 +429,7 @@ jobs:
             # Fetch the Old workflow ID
             export OldWorkflowID=$(cat ~/oldworkflowid.txt)
             CurrentWorkflowID=${CIRCLE_WORKFLOW_ID:0:7}
-            if [[ "$CurrentWorkflowID" =~ "${OldWorkflowID}" ]]
+            if [[ "$CurrentWorkflowID" != "${OldWorkflowID}" ]]
             then
                 echo "$OldWorkflowID!=$CurrentWorkflowID => will delete old version"
             
