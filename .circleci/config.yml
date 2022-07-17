@@ -509,3 +509,5 @@ workflows:
 #          requires: [smoke-test]
       - cleanup:
           requires: [ cloudfront-update ]
+
+# This workflow is used for the "deploy" action.
